@@ -55,6 +55,16 @@ function App() {
       ) : (
         <>
           <Hero onRegisterClick={() => setShowRegistration(true)} />
+          {currentPage !== 'dashboard' && (
+            <div className="container mx-auto px-4 py-4">
+              <button
+                onClick={() => setCurrentPage('dashboard')}
+                className="text-green-600 hover:text-green-700"
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
+          )}
           <div className="container mx-auto px-4">
             {renderPage()}
           </div>
