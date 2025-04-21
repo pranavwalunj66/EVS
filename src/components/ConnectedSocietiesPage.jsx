@@ -112,13 +112,7 @@ const ConnectedSocietiesPage = ({ onBack }) => {
   return (
     <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <button
-            onClick={onBack}
-            className="text-green-600 hover:text-green-700 flex items-center"
-          >
-            ← Back to Dashboard
-          </button>
+        <div className="flex justify-center items-center mb-8">
           <h2 className="text-3xl font-bold text-center">Connected Societies</h2>
           <div className="w-24"></div> {/* Spacer for alignment */}
         </div>
