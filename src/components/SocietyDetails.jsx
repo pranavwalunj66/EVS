@@ -281,7 +281,7 @@ const SocietyDetails = ({ society, onBack }) => {
           <MapView society={society} />
         </div>
 
-        <ScheduleCalendar societyId={society.id} />
+        <ScheduleCalendar societyId={society.id} societyName={society.societyName} />
       </div>
     </motion.div>
   );
