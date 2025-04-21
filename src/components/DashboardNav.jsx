@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FaChartLine, FaUsers, FaLightbulb, FaRecycle, FaComment, FaExpand, FaCompress } from 'react-icons/fa';
+import { FaChartLine, FaUsers, FaLightbulb, FaRecycle, FaComment, FaExpand, FaCompress, FaSearch } from 'react-icons/fa';
 import React, { useState, useEffect, useRef } from 'react';
 import Modal from 'react-modal';
 
@@ -31,6 +31,12 @@ const DashboardNav = ({ onNavigate }) => {
       icon: <FaRecycle className="text-2xl" />,
       description: 'Step-by-step guide for waste management process',
       page: 'process',
+    },
+    {
+      title: 'Waste Identification', // New item
+      icon: <FaSearch className="text-2xl" />, // New icon
+      description: 'Identify waste items and learn how to dispose of them', // New description
+      page: 'identification', // New page name
     },
   ];
 

@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tensorflow-models/mobilenet": "^2.1.1",
+    "@tensorflow/tfjs": "^4.22.0",
     "chart.js": "^4.4.9",
     "framer-motion": "^12.7.3",
     "react": "^19.0.0",

@@ -7,7 +7,8 @@ import ProcessVisualization from './components/ProcessVisualization';
 import RegistrationForm from './components/RegistrationForm';
 import ConnectedSocietiesPage from './components/ConnectedSocietiesPage';
 import DashboardNav from './components/DashboardNav';
-import './App.css'
+import './App.css';
+import WasteIdentification from './components/WasteIdentification';
 
 function App() {
   const [showRegistration, setShowRegistration] = useState(false);
@@ -32,6 +33,8 @@ function App() {
         return <SuccessStories />;
       case 'process':
         return <ProcessVisualization />;
+      case 'identification':
+        return <WasteIdentification />;
       default:
         return <DashboardNav onNavigate={handleNavigate} />;
     }

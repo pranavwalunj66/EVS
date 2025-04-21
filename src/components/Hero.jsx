@@ -4,7 +4,7 @@ import { FaLeaf, FaRecycle } from 'react-icons/fa';
 const Hero = ({ onRegisterClick }) => {
   return (
     <div className="relative overflow-hidden">
-      <div className="bg-pattern absolute inset-0" />
+      <div className="bg-pattern mt-20 absolute inset-0" />
       
       {/* Decorative elements */}
       <div className="absolute top-0 left-0 w-64 h-64 text-green-500 opacity-10">
