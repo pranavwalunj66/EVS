@@ -54,7 +54,21 @@ const SocietyDetails = ({ society, onBack }) => {
   // Check if this is a hardcoded society (has achievements)
   const isHardcodedSociety = society.achievements !== undefined;
   
-  const monthlyData = isHardcodedSociety ? generateMonthlyData() : Array(12).fill(0);
+  // Generate data for each waste type
+  const generateMonthlyDataForType = () => {
+    return Array(12).fill(0).map(() => Math.floor(Math.random() * 200) + 100);
+  };
+
+  const monthlyData = isHardcodedSociety ? {
+    organic: generateMonthlyDataForType(),
+    recyclable: generateMonthlyDataForType(),
+    nonRecyclable: generateMonthlyDataForType()
+  } : {
+    organic: Array(12).fill(0),
+    recyclable: Array(12).fill(0),
+    nonRecyclable: Array(12).fill(0)
+  };
+
   const wasteTypeData = isHardcodedSociety ? generateWasteTypeData() : { organic: 0, recyclable: 0, nonRecyclable: 0 };
   const efficiencyData = isHardcodedSociety ? generateEfficiencyData() : Array(12).fill(0);
 
@@ -62,11 +76,28 @@ const SocietyDetails = ({ society, onBack }) => {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
     datasets: [
       {
-        label: 'Waste Collection (kg)',
-        data: monthlyData,
+        label: 'Organic Waste',
+        data: monthlyData.organic,
         backgroundColor: 'rgba(34, 197, 94, 0.5)',
         borderColor: 'rgb(34, 197, 94)',
         borderWidth: 2,
+        stack: 'Stack 0',
+      },
+      {
+        label: 'Recyclable Waste',
+        data: monthlyData.recyclable,
+        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+        borderColor: 'rgb(59, 130, 246)',
+        borderWidth: 2,
+        stack: 'Stack 0',
+      },
+      {
+        label: 'Non-Recyclable Waste',
+        data: monthlyData.nonRecyclable,
+        backgroundColor: 'rgba(239, 68, 68, 0.5)',
+        borderColor: 'rgb(239, 68, 68)',
+        borderWidth: 2,
+        stack: 'Stack 0',
       },
     ],
   };
@@ -103,7 +134,9 @@ const SocietyDetails = ({ society, onBack }) => {
     ],
   };
 
-  const totalWaste = monthlyData.reduce((a, b) => a + b, 0);
+  const totalWaste = monthlyData.organic.reduce((a, b) => a + b, 0) +
+                    monthlyData.recyclable.reduce((a, b) => a + b, 0) +
+                    monthlyData.nonRecyclable.reduce((a, b) => a + b, 0);
   const avgEfficiency = efficiencyData.reduce((a, b) => a + b, 0) / 12;
   const recyclingRate = isHardcodedSociety 
     ? (wasteTypeData.recyclable / (wasteTypeData.organic + wasteTypeData.recyclable + wasteTypeData.nonRecyclable)) * 100
@@ -159,6 +192,14 @@ const SocietyDetails = ({ society, onBack }) => {
                       position: 'top',
                     },
                   },
+                  scales: {
+                    x: {
+                      stacked: true,
+                    },
+                    y: {
+                      stacked: true,
+                    }
+                  }
                 }} />
               ) : (
                 <NoDataMessage />
