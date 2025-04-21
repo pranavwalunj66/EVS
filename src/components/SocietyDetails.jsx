@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion';
-import { FaArrowLeft, FaTrash, FaRecycle, FaLeaf } from 'react-icons/fa';
+import { FaArrowLeft, FaTrash, FaRecycle, FaLeaf, FaMapMarkedAlt, FaCalendarAlt } from 'react-icons/fa';
+import MapView from './MapView';
+import ScheduleCalendar from './ScheduleCalendar';
 import { Line, Bar, Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -53,7 +55,7 @@ const NoDataMessage = () => (
 const SocietyDetails = ({ society, onBack }) => {
   // Check if this is a hardcoded society (has achievements)
   const isHardcodedSociety = society.achievements !== undefined;
-  
+
   // Generate data for each waste type
   const generateMonthlyDataForType = () => {
     return Array(12).fill(0).map(() => Math.floor(Math.random() * 200) + 100);
@@ -138,7 +140,7 @@ const SocietyDetails = ({ society, onBack }) => {
                     monthlyData.recyclable.reduce((a, b) => a + b, 0) +
                     monthlyData.nonRecyclable.reduce((a, b) => a + b, 0);
   const avgEfficiency = efficiencyData.reduce((a, b) => a + b, 0) / 12;
-  const recyclingRate = isHardcodedSociety 
+  const recyclingRate = isHardcodedSociety
     ? (wasteTypeData.recyclable / (wasteTypeData.organic + wasteTypeData.recyclable + wasteTypeData.nonRecyclable)) * 100
     : 0;
 
@@ -244,7 +246,7 @@ const SocietyDetails = ({ society, onBack }) => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
           <h3 className="text-xl font-semibold mb-4">Society Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -270,9 +272,19 @@ const SocietyDetails = ({ society, onBack }) => {
             )}
           </div>
         </div>
+
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <div className="flex items-center mb-4">
+            <FaMapMarkedAlt className="text-xl text-green-600 mr-2" />
+            <h3 className="text-xl font-semibold">Society Location</h3>
+          </div>
+          <MapView society={society} />
+        </div>
+
+        <ScheduleCalendar societyId={society.id} />
       </div>
     </motion.div>
   );
 };
 
-export default SocietyDetails; 
+export default SocietyDetails;

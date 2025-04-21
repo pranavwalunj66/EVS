@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { FaMapMarkerAlt, FaUser, FaPhone, FaUsers } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaUser, FaPhone, FaUsers, FaMap } from 'react-icons/fa';
 import SocietyDetails from './SocietyDetails';
+import SocietiesMapView from './SocietiesMapView';
 
 const SocietyCard = ({ society, onClick }) => (
   <motion.div
@@ -32,9 +33,10 @@ const SocietyCard = ({ society, onClick }) => (
   </motion.div>
 );
 
-const ConnectedSocietiesPage = ({ onBack }) => {
+const ConnectedSocietiesPage = () => {
   const [societies, setSocieties] = useState([]);
   const [selectedSociety, setSelectedSociety] = useState(null);
+  const [showMapView, setShowMapView] = useState(false);
 
   // Hardcoded societies
   const hardcodedSocieties = [
@@ -88,10 +90,10 @@ const ConnectedSocietiesPage = ({ onBack }) => {
   useEffect(() => {
     // Get societies from localStorage
     const storedSocieties = JSON.parse(localStorage.getItem('societies') || '[]');
-    
+
     // Sort stored societies by ID in descending order (newest first)
     const sortedStoredSocieties = [...storedSocieties].sort((a, b) => b.id - a.id);
-    
+
     // Combine sorted stored societies (at the top) with hardcoded societies
     const allSocieties = [...sortedStoredSocieties, ...hardcodedSocieties];
     setSocieties(allSocieties);
@@ -103,18 +105,32 @@ const ConnectedSocietiesPage = ({ onBack }) => {
 
   const handleBackToList = () => {
     setSelectedSociety(null);
+    setShowMapView(false);
+  };
+
+  const handleShowMapView = () => {
+    setShowMapView(true);
   };
 
   if (selectedSociety) {
     return <SocietyDetails society={selectedSociety} onBack={handleBackToList} />;
   }
 
+  if (showMapView) {
+    return <SocietiesMapView societies={societies} onBack={handleBackToList} onSocietySelect={handleSocietyClick} />;
+  }
+
   return (
     <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-center items-center mb-8">
-          <h2 className="text-3xl font-bold text-center">Connected Societies</h2>
-          <div className="w-24"></div> {/* Spacer for alignment */}
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-3xl font-bold">Connected Societies</h2>
+          <button
+            onClick={handleShowMapView}
+            className="bg-green-600 text-white px-4 py-2 rounded-md flex items-center"
+          >
+            <FaMap className="mr-2" /> View Map
+          </button>
         </div>
         {societies.length === 0 ? (
           <div className="text-center text-gray-500 py-12">
@@ -123,9 +139,9 @@ const ConnectedSocietiesPage = ({ onBack }) => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {societies.map((society) => (
-              <SocietyCard 
-                key={society.id} 
-                society={society} 
+              <SocietyCard
+                key={society.id}
+                society={society}
                 onClick={handleSocietyClick}
               />
             ))}
@@ -136,4 +152,4 @@ const ConnectedSocietiesPage = ({ onBack }) => {
   );
 };
 
-export default ConnectedSocietiesPage; 
+export default ConnectedSocietiesPage;
