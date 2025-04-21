@@ -1,12 +1,14 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { FaMapMarkerAlt, FaUser, FaPhone, FaUsers } from 'react-icons/fa';
+import SocietyDetails from './SocietyDetails';
 
-const SocietyCard = ({ society }) => (
+const SocietyCard = ({ society, onClick }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    className="card"
+    className="card cursor-pointer hover:shadow-md transition-shadow duration-200"
+    onClick={() => onClick(society)}
   >
     <h3 className="text-xl font-semibold text-primary mb-4">{society.societyName}</h3>
     <div className="space-y-3">
@@ -32,6 +34,7 @@ const SocietyCard = ({ society }) => (
 
 const ConnectedSocietiesPage = ({ onBack }) => {
   const [societies, setSocieties] = useState([]);
+  const [selectedSociety, setSelectedSociety] = useState(null);
 
   // Hardcoded societies
   const hardcodedSocieties = [
@@ -85,16 +88,39 @@ const ConnectedSocietiesPage = ({ onBack }) => {
   useEffect(() => {
     // Get societies from localStorage
     const storedSocieties = JSON.parse(localStorage.getItem('societies') || '[]');
-    // Combine stored societies (at the top) with hardcoded societies
-    const allSocieties = [...storedSocieties, ...hardcodedSocieties];
+    
+    // Sort stored societies by ID in descending order (newest first)
+    const sortedStoredSocieties = [...storedSocieties].sort((a, b) => b.id - a.id);
+    
+    // Combine sorted stored societies (at the top) with hardcoded societies
+    const allSocieties = [...sortedStoredSocieties, ...hardcodedSocieties];
     setSocieties(allSocieties);
   }, []);
+
+  const handleSocietyClick = (society) => {
+    setSelectedSociety(society);
+  };
+
+  const handleBackToList = () => {
+    setSelectedSociety(null);
+  };
+
+  if (selectedSociety) {
+    return <SocietyDetails society={selectedSociety} onBack={handleBackToList} />;
+  }
 
   return (
     <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-center items-center mb-8">
+        <div className="flex justify-between items-center mb-8">
+          <button
+            onClick={onBack}
+            className="text-green-600 hover:text-green-700 flex items-center"
+          >
+            ← Back to Dashboard
+          </button>
           <h2 className="text-3xl font-bold text-center">Connected Societies</h2>
+          <div className="w-24"></div> {/* Spacer for alignment */}
         </div>
         {societies.length === 0 ? (
           <div className="text-center text-gray-500 py-12">
@@ -103,7 +129,11 @@ const ConnectedSocietiesPage = ({ onBack }) => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {societies.map((society) => (
-              <SocietyCard key={society.id} society={society} />
+              <SocietyCard 
+                key={society.id} 
+                society={society} 
+                onClick={handleSocietyClick}
+              />
             ))}
           </div>
         )}
