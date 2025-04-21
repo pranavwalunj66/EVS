@@ -1,19 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { FaImage, FaVideo, FaMusic, FaSpinner } from 'react-icons/fa';
 
 const WasteIdentification = () => {
-    const [image, setImage] = useState(null);
-    const [imageUrl, setImageUrl] = useState(null);
+    const [mediaFile, setMediaFile] = useState(null);
+    const [mediaUrl, setMediaUrl] = useState(null);
+    const [mediaType, setMediaType] = useState(null); // 'image', 'video', or 'audio'
     const [prediction, setPrediction] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
     const fileInputRef = useRef(null);
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-    const handleImageChange = (event) => {
+    const handleFileChange = (event) => {
         const file = event.target.files[0];
         if (file) {
-            setImage(file);
-            setImageUrl(URL.createObjectURL(file));
-            setPrediction(null);
+            processFile(file);
         }
     };
 
@@ -21,9 +22,24 @@ const WasteIdentification = () => {
         event.preventDefault();
         const file = event.dataTransfer.files[0];
         if (file) {
-            setImage(file);
-            setImageUrl(URL.createObjectURL(file));
-            setPrediction(null);
+            processFile(file);
+        }
+    };
+
+    const processFile = (file) => {
+        // Reset states
+        setPrediction(null);
+        setError(null);
+
+        // Determine file type
+        const fileType = file.type.split('/')[0]; // 'image', 'video', 'audio'
+
+        if (fileType === 'image' || fileType === 'video' || fileType === 'audio') {
+            setMediaFile(file);
+            setMediaUrl(URL.createObjectURL(file));
+            setMediaType(fileType);
+        } else {
+            setError('Unsupported file type. Please upload an image, video, or audio file.');
         }
     };
 
@@ -36,33 +52,31 @@ const WasteIdentification = () => {
     };
 
     const identifyWaste = async () => {
-        if (!image) {
-            alert('Please select an image first.');
+        if (!mediaFile) {
+            setError('Please select a file first.');
             return;
         }
 
         setIsLoading(true);
         setPrediction(null);
+        setError(null);
 
         try {
-            const response = await callGeminiAPI(image);
+            const response = await callGeminiAPI(mediaFile, mediaType);
             setPrediction(response);
         } catch (error) {
             console.error('Error identifying waste:', error);
-            setPrediction({
-                label: 'Error',
-                confidence: 0,
-                instructions: 'An error occurred while processing the image.',
-            });
+            setError('An error occurred while processing your file. Please try again.');
+            setPrediction(null);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const callGeminiAPI = async (imageFile) => {
+    const callGeminiAPI = async (file, fileType) => {
         const systemInstructions = `You are a highly knowledgeable and detailed expert in waste management and recycling. Your task is to analyze images of waste items and provide comprehensive information about them. When you receive an image, follow these steps:
 
-1.  **Identify the Waste Type:** Clearly state the type of waste (e.g., "Plastic Waste," "Metal Waste," "Organic Waste," "Paper Waste," "Glass Waste," "Electronic Waste," "Hazardous Waste," "Textile Waste," "Composite Waste").
+1.  **Identify the Waste Type:** Clearly state the type of waste (e.g., "Plastic Waste," "Metal Waste," "Organic Waste," "Paper Waste," "Glass Waste," "Electronic Waste," "Hazardous Waste," "Textile Waste," "Composite Waste"). If you're analyzing audio or video, describe what you can observe or hear that helps identify the waste.
 2.  **Detailed Description:** Provide a detailed description of the waste item, including its common uses, materials it is made of, and any specific characteristics that help in its identification.
 3.  **Disposal Instructions:** Offer specific, step-by-step instructions on how to properly dispose of the waste item. Include information on whether it can be recycled, composted, or if it needs to be disposed of in a special way.
 4.  **Environmental Impact:** Briefly explain the environmental impact of this type of waste if not disposed of properly. Mention any potential hazards or pollution it can cause.
@@ -72,10 +86,17 @@ const WasteIdentification = () => {
 8. **Safety Precautions:** If there are any safety precautions to take when handling this type of waste, mention them.
 
 **Format your response using markdown for clarity. Use bold text (**) for headings and important points, bullet points (*) for lists, and proper spacing for readability. Start your response with the waste type followed by a colon.**`;
-        const prompt = `${systemInstructions}\n\nIdentify the waste item in the image and provide instructions on how to dispose of it.`;
+        let prompt;
+        if (fileType === 'image') {
+            prompt = `${systemInstructions}\n\nIdentify the waste item in the image and provide instructions on how to dispose of it.`;
+        } else if (fileType === 'video') {
+            prompt = `${systemInstructions}\n\nAnalyze this video of waste material. Identify the waste items you can see and provide instructions on how to dispose of them.`;
+        } else if (fileType === 'audio') {
+            prompt = `${systemInstructions}\n\nListen to this audio recording related to waste. If you can identify any waste items being discussed or sounds of waste processing, provide information about them and how they should be disposed of.`;
+        }
 
         try {
-            const base64Image = await convertImageToBase64(imageFile);
+            const base64Data = await convertFileToBase64(file);
 
             const response = await fetch(
                 `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
@@ -91,8 +112,8 @@ const WasteIdentification = () => {
                                     { text: prompt },
                                     {
                                         inline_data: {
-                                            mime_type: imageFile.type,
-                                            data: base64Image,
+                                            mime_type: file.type,
+                                            data: base64Data,
                                         },
                                     },
                                 ],
@@ -119,9 +140,7 @@ const WasteIdentification = () => {
                 data.candidates[0].content.parts.length > 0
             ) {
                 const responseText = data.candidates[0].content.parts[0].text;
-                // Extract the waste type from the beginning of the response
-                const wasteTypeMatch = responseText.match(/^([A-Za-z\s]+)[\s]*:/);
-                const wasteType = wasteTypeMatch ? wasteTypeMatch[1].trim() : 'Unknown';
+                // We used to extract the waste type here, but now we just use the full response
                 // Generate a random confidence level between 80 and 96
                 const randomConfidence = Math.floor(Math.random() * (96 - 80 + 1)) + 80;
                 return {
@@ -139,7 +158,7 @@ const WasteIdentification = () => {
         }
     };
 
-    const convertImageToBase64 = (file) => {
+    const convertFileToBase64 = (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -152,16 +171,16 @@ const WasteIdentification = () => {
     };
 
     useEffect(() => {
-        if (image) {
+        if (mediaFile) {
             identifyWaste();
         }
-    }, [image]);
+    }, [mediaFile]);
 
     return (
         <div className="container mx-auto p-4">
             <h1 className="text-3xl font-bold text-gray-800 mb-4">Waste Item Identification</h1>
             <p className="text-gray-600 mb-4">
-                Upload an image of a waste item to identify it and learn how to dispose of it properly.
+                Upload an image, video, or audio file of a waste item to identify it and learn how to dispose of it properly.
             </p>
 
             <div
@@ -172,23 +191,66 @@ const WasteIdentification = () => {
             >
                 <input
                     type="file"
-                    accept="image/*; capture=camera"
-                    onChange={handleImageChange}
+                    accept="image/*; video/*; audio/*; capture=camera"
+                    onChange={handleFileChange}
                     className="hidden"
                     ref={fileInputRef}
                 />
-                {imageUrl ? (
-                    <img src={imageUrl} alt="Uploaded" className="max-w-full max-h-64 mx-auto" />
+                {mediaUrl ? (
+                    <div className="flex flex-col items-center">
+                        {mediaType === 'image' && (
+                            <img src={mediaUrl} alt="Uploaded image" className="max-w-full max-h-64 mx-auto rounded-lg" />
+                        )}
+                        {mediaType === 'video' && (
+                            <video
+                                src={mediaUrl}
+                                controls
+                                className="max-w-full max-h-64 mx-auto rounded-lg"
+                            />
+                        )}
+                        {mediaType === 'audio' && (
+                            <div className="w-full max-w-md mx-auto">
+                                <div className="bg-gray-100 p-4 rounded-lg flex items-center justify-center mb-2">
+                                    <FaMusic className="text-4xl text-green-600" />
+                                </div>
+                                <audio
+                                    src={mediaUrl}
+                                    controls
+                                    className="w-full"
+                                />
+                            </div>
+                        )}
+                        <p className="text-sm text-gray-500 mt-2">
+                            {mediaFile.name}
+                        </p>
+                    </div>
                 ) : (
-                    <p className="text-gray-600 text-center">
-                        Drag and drop an image here, or click to select an image.
-                    </p>
+                    <div className="text-center">
+                        <div className="flex justify-center space-x-4 mb-4">
+                            <FaImage className="text-3xl text-green-600" />
+                            <FaVideo className="text-3xl text-blue-600" />
+                            <FaMusic className="text-3xl text-purple-600" />
+                        </div>
+                        <p className="text-gray-600">
+                            Drag and drop a file here, or click to select a file.
+                        </p>
+                        <p className="text-gray-500 text-sm mt-2">
+                            Supported formats: Images, Videos, Audio files
+                        </p>
+                    </div>
                 )}
             </div>
 
+            {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    <p>{error}</p>
+                </div>
+            )}
+
             {isLoading && (
-                <div className="text-center mb-4">
-                    <p className="text-gray-600">Identifying waste...</p>
+                <div className="text-center mb-4 flex items-center justify-center">
+                    <FaSpinner className="animate-spin text-green-600 mr-2" />
+                    <p className="text-gray-600">Analyzing your {mediaType} file...</p>
                 </div>
             )}
 
@@ -215,7 +277,7 @@ const formatGeminiResponse = (text) => {
     // Convert markdown-like lists to <ul> and <li> tags with proper indentation
     formattedText = formattedText.replace(
         /(^|\n)\s*\* (.*?)(?=(\n\s*\*|$))/g,
-        (match, p1, p2) => {
+        (_match, p1, p2) => {
             return `${p1}  <li>${p2}</li>`; // Added indentation here
         }
     );
