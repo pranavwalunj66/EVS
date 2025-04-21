@@ -50,14 +50,16 @@ function App() {
           >
             ← Back to Dashboard
           </button>
-          <RegistrationForm 
+          <RegistrationForm
             onClose={() => setShowRegistration(false)}
             onRegister={handleRegister}
           />
         </div>
       ) : (
         <>
-          <Hero onRegisterClick={() => setShowRegistration(true)} />
+          {currentPage === 'dashboard' && (
+            <Hero onRegisterClick={() => setShowRegistration(true)} />
+          )}
           {currentPage !== 'dashboard' && (
             <div className="container mx-auto px-4 py-4">
               <button
