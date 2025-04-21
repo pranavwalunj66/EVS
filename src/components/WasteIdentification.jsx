@@ -159,7 +159,7 @@ const WasteIdentification = () => {
             >
                 <input
                     type="file"
-                    accept="image/*"
+                    accept="image/*; capture=camera"
                     onChange={handleImageChange}
                     className="hidden"
                     ref={fileInputRef}
