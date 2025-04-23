@@ -9,6 +9,7 @@ import ConnectedSocietiesPage from './components/ConnectedSocietiesPage';
 import DashboardNav from './components/DashboardNav';
 import './App.css';
 import WasteIdentification from './components/WasteIdentification';
+import EducationalResources from './components/EducationalResources';
 
 function App() {
   const [showRegistration, setShowRegistration] = useState(false);
@@ -35,6 +36,8 @@ function App() {
         return <ProcessVisualization />;
       case 'identification':
         return <WasteIdentification />;
+      case 'education':
+        return <EducationalResources />;
       default:
         return <DashboardNav onNavigate={handleNavigate} />;
     }

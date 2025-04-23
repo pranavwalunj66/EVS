@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FaChartLine, FaUsers, FaLightbulb, FaRecycle, FaComment, FaExpand, FaCompress, FaSearch } from 'react-icons/fa';
+import { FaChartLine, FaUsers, FaLightbulb, FaRecycle, FaComment, FaExpand, FaCompress, FaSearch, FaBook } from 'react-icons/fa';
 import React, { useState, useEffect, useRef } from 'react';
 import Modal from 'react-modal';
 
@@ -33,10 +33,16 @@ const DashboardNav = ({ onNavigate }) => {
       page: 'process',
     },
     {
-      title: 'Waste Identification', // New item
-      icon: <FaSearch className="text-2xl" />, // New icon
-      description: 'Identify waste items and learn how to dispose of them', // New description
-      page: 'identification', // New page name
+      title: 'Waste Identification',
+      icon: <FaSearch className="text-2xl" />,
+      description: 'Identify waste items and learn how to dispose of them',
+      page: 'identification',
+    },
+    {
+      title: 'Educational Resources',
+      icon: <FaBook className="text-2xl" />,
+      description: 'Videos, articles, and guides about waste management',
+      page: 'education',
     },
   ];
 
@@ -62,7 +68,7 @@ const DashboardNav = ({ onNavigate }) => {
     // Convert markdown-like lists to <ul> and <li> tags with proper indentation
     formattedText = formattedText.replace(
       /(^|\n)\s*\* (.*?)(?=(\n\s*\*|$))/g,
-      (match, p1, p2) => {
+      (_match, p1, p2) => {
         return `${p1}  <li>${p2}</li>`; // Added indentation here
       }
     );
@@ -176,7 +182,7 @@ const DashboardNav = ({ onNavigate }) => {
   return (
     <div className="pt-4 pb-8 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {navItems.map((item) => (
             <motion.button
               key={item.page}
