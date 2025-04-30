@@ -97,41 +97,77 @@ const WasteIdentification = () => {
 
         try {
             const base64Data = await convertFileToBase64(file);
-
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        contents: [
-                            {
-                                parts: [
-                                    { text: prompt },
-                                    {
-                                        inline_data: {
-                                            mime_type: file.type,
-                                            data: base64Data,
+        
+            let response;
+            try {
+                response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [
+                                {
+                                    parts: [
+                                        { text: prompt },
+                                        {
+                                            inline_data: {
+                                                mime_type: file.type,
+                                                data: base64Data,
+                                            },
                                         },
-                                    },
-                                ],
-                            },
-                        ],
-                    }),
+                                    ],
+                                },
+                            ],
+                        }),
+                    }
+                );
+        
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Gemini API Error (gemini-2.0-flash):', errorData);
+                    throw new Error(`Gemini API request failed with status ${response.status}`);
                 }
-            );
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.error('Gemini API Error:', errorData);
-                throw new Error(`Gemini API request failed with status ${response.status}`);
+            } catch (error) {
+                console.warn('gemini-2.0-flash failed, attempting gemini-2.0-flash-lite:', error);
+                response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [
+                                {
+                                    parts: [
+                                        { text: prompt },
+                                        {
+                                            inline_data: {
+                                                mime_type: file.type,
+                                                data: base64Data,
+                                            },
+                                        },
+                                    ],
+                                },
+                            ],
+                        }),
+                    }
+                );
+        
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Gemini API Error (gemini-2.0-flash-lite):', errorData);
+                    throw new Error(`Gemini API request failed with status ${response.status}`);
+                }
             }
-
+        
+        
             const data = await response.json();
             console.log('Gemini API Response:', data);
-
+        
             if (
                 data.candidates &&
                 data.candidates.length > 0 &&
@@ -156,6 +192,7 @@ const WasteIdentification = () => {
             console.error('Error calling Gemini API:', error);
             throw error;
         }
+        
     };
 
     const convertFileToBase64 = (file) => {

@@ -2,6 +2,8 @@ import { motion } from 'framer-motion';
 import { FaChartLine, FaUsers, FaLightbulb, FaRecycle, FaComment, FaExpand, FaCompress, FaSearch, FaBook } from 'react-icons/fa';
 import React, { useState, useEffect, useRef } from 'react';
 import Modal from 'react-modal';
+import Header from './Header'; // Import the Header component
+import { useNavigate } from 'react-router-dom';
 
 // Make sure to bind modal to your appElement (http://reactcommunity.org/react-modal/accessibility/)
 Modal.setAppElement('#root');
@@ -52,6 +54,13 @@ const DashboardNav = ({ onNavigate }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isChatbotMaximized, setIsChatbotMaximized] = useState(false);
   const chatboxRef = useRef(null);
+  const cursorRef = useRef(null);
+  const hiddenTextRef = useRef(null);
+  const messageContainerRef = useRef(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
 
   const openChatbot = () => setIsChatbotOpen(true);
   const closeChatbot = () => setIsChatbotOpen(false);
@@ -101,28 +110,64 @@ const DashboardNav = ({ onNavigate }) => {
     const newUserMessage = { text: userInput, sender: 'user' };
     setChatMessages((prevMessages) => [...prevMessages, newUserMessage]);
     setUserInput('');
+
+    // Add typing indicator
+    const typingIndicator = { text: 'Thinking...', sender: 'bot', isTyping: true };
+    setChatMessages((prevMessages) => [...prevMessages, typingIndicator]);
+
     setIsLoading(true);
 
     try {
       const geminiResponse = await callGeminiAPI(userInput);
       const formattedResponse = formatGeminiResponse(geminiResponse);
-      const newBotMessage = { text: formattedResponse, sender: 'bot', isHtml: true };
+      // Remove typing indicator
+      setChatMessages((prevMessages) => prevMessages.filter((msg) => !msg.isTyping));
+
+      // Simulate streaming
+      const newBotMessage = { text: '', sender: 'bot', isHtml: true, isPartial: true };
       setChatMessages((prevMessages) => [...prevMessages, newBotMessage]);
+      for (let i = 0; i < formattedResponse.length; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 30)); // Adjust delay as needed
+        const currentText = formattedResponse.substring(0, i + 1);
+        setChatMessages((prevMessages) => {
+          const newMessages = [...prevMessages];
+          const lastMessageIndex = newMessages.findLastIndex((msg) => msg.sender === 'bot' && msg.isPartial);
+          newMessages[lastMessageIndex] = {
+            ...newMessages[lastMessageIndex], text: (i<formattedResponse.length - 1) ? currentText + `<span className="cursor">🟢</span>` : currentText };
+          
+          return newMessages;
+        });
+        if (hiddenTextRef.current) {
+          hiddenTextRef.current.innerHTML = `<span style="white-space: pre-wrap;">${formattedResponse.substring(0, i + 1)}</span>`;
+        }
+      }
+      // Update the last message to not be partial
+      setChatMessages((prevMessages) => {
+        const newMessages = [...prevMessages];
+        const lastMessageIndex = newMessages.findLastIndex((msg) => msg.sender === 'bot' && msg.isPartial);
+        newMessages[lastMessageIndex] = { ...newMessages[lastMessageIndex], isPartial: false };
+        return newMessages;
+      });
     } catch (error) {
       console.error('Error in sendMessage:', error);
       const errorBotMessage = {
         text: "Sorry, I'm having trouble connecting right now. Please try again later.",
         sender: 'bot',
       };
-      setChatMessages((prevMessages) => [...prevMessages, errorBotMessage]);
+      setChatMessages((prevMessages) => {
+        // Remove typing indicator
+        const newMessages = prevMessages.filter((msg) => !msg.isTyping);
+        return [...newMessages, errorBotMessage];
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const callGeminiAPI = async (userQuery) => {
+    if (!userQuery) return null;
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    const systemInstructions = `You are a helpful assistant specialized in solid waste management. You have access to detailed information about waste management processes, metrics, and best practices. Your goal is to provide accurate and informative answers to user queries related to solid waste management. When responding, use markdown formatting for bolding (using **bold text**), spacing, and lists (using * list item).`;
+    const systemInstructions = `You are a helpful assistant specialized in solid waste management. You have access to detailed information about waste management processes, metrics, and best practices. Your goal is to provide accurate and informative answers to user queries related to solid waste management. When responding, use markdown formatting for bolding (using **bold text**), spacing, and lists (using * list item). Prefer brief responses unless specified for detailed response and if user ask any outside of solid waste management, please respond with "I am sorry, but I can only provide information related to solid waste management."`;
     const prompt = `${systemInstructions}\n\nUser Query: ${userQuery}`;
 
     try {
@@ -179,8 +224,47 @@ const DashboardNav = ({ onNavigate }) => {
     }
   }, [chatMessages]);
 
+
+  const handleLogin = (userData, adminStatus) => {
+    setIsLoggedIn(true);
+    setIsAdmin(adminStatus);
+    setUser(userData);
+    if (adminStatus) {
+      navigate('/admin-dashboard');
+    } else {
+      navigate('/user-dashboard');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    setIsAdmin(false);
+    setUser(null);
+    navigate('/');
+  };
+
   return (
     <div className="pt-4 pb-8 relative">
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {isLoggedIn && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {navItems.map((item) => (
+              <motion.button
+                key={item.page}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => onNavigate(item.page)}
+                className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 text-left"
+              >
+                <div className="text-green-600 mb-4">{item.icon}</div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{item.title}</h3>
+                <p className="text-sm text-gray-600">{item.description}</p>
+              </motion.button>
+            ))}
+          </div>
+        )}
+      </div>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {navItems.map((item) => (
@@ -241,32 +325,29 @@ const DashboardNav = ({ onNavigate }) => {
             ref={chatboxRef}
             style={{ maxHeight: isChatbotMaximized ? 'calc(100vh - 120px)' : 'calc(100vh - 300px)' }}
           >
+            <div ref={hiddenTextRef} style={{ position: 'absolute', top: '-9999px', left: '-9999px', visibility: 'hidden' }}></div>
             {chatMessages.map((message, index) => (
               <div
                 key={index}
                 className={`mb-3 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}
               >
                 <div
+                  ref={messageContainerRef}
                   className={`inline-block p-3 rounded-lg max-w-[70%] break-words ${message.sender === 'user'
                     ? 'bg-green-200 text-gray-800'
                     : 'bg-gray-100 text-gray-800'
                     }`}
                 >
                   {message.isHtml ? (
-                    <div dangerouslySetInnerHTML={{ __html: message.text }} />
+                    <div style={{ position: 'relative' }}>
+                      <div dangerouslySetInnerHTML={{ __html: message.text }} />
+                    </div>
                   ) : (
                     message.text
                   )}
                 </div>
               </div>
             ))}
-            {isLoading && (
-              <div className="text-left mb-2">
-                <div className="inline-block p-2 rounded-lg bg-gray-100 text-gray-800">
-                  Loading...
-                </div>
-              </div>
-            )}
           </div>
           <div className="flex">
             <input
