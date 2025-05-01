@@ -3,7 +3,7 @@ import { FaMapMarkerAlt, FaRecycle, FaLeaf } from 'react-icons/fa';
 
 const societies = [
   {
-    name: "Green Valley Society",
+    name: "Aishwarayam Hamara",
     location: "Mumbai, Maharashtra",
     wasteCollected: "5000 kg",
     recyclingRate: "85%"

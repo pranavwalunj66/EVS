@@ -68,7 +68,7 @@ const SocietiesMapView = ({ societies, onBack, onSocietySelect }) => {
     // Add markers for each society
     const addMarkers = async () => {
       for (const society of societies) {
-        const coordinates = await fetchCoordinates(society.address);
+        const coordinates = await fetchCoordinates(society.name + ', ' + society.address);
         if (coordinates && coordinates.lat && coordinates.lng) {
           const marker = L.marker(coordinates).addTo(map);
 
