@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Hero2 from './Hero2';
 
 const AdminDashboard = () => {
   const [issues, setIssues] = useState([]);
@@ -50,6 +51,7 @@ const AdminDashboard = () => {
 
   return (
     <div className="container mx-auto p-4">
+      <Hero2/>
       <h2 className="text-2xl font-bold mb-4">Admin Dashboard</h2>
 
       {/* List of Issues */}

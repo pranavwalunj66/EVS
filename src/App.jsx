@@ -11,6 +11,8 @@ import './App.css';
 import WasteIdentification from './components/WasteIdentification';
 import EducationalResources from './components/EducationalResources';
 import Header from './components/Header';
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   BrowserRouter as Router,
   Routes,
@@ -45,6 +47,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [user, setUser] = useState(null);
+  // const navigate = useNavigate();
 
   useEffect(() => {
     // Check for login state in localStorage on mount
@@ -105,7 +108,7 @@ function App() {
       case 'education':
         return <EducationalResources />;
       case 'registration':
-        return <RegistrationForm onRegister={handleRegister} onBack={() => setCurrentPage('dashboard')} />;
+        return <SignUp />;
       default:
         return <DashboardNav onNavigate={handleNavigate} />;
     }
@@ -114,9 +117,9 @@ function App() {
   return (
     <>
       <Router>
-        
+
         <div className="min-h-screen bg-gray-50 flex flex-col">
-          <Header isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout} />
+          {/* <Header isLoggedIn={isLoggedIn} isAdmin={isAdmin} onLogout={handleLogout} /> */}
           {showRegistration ? (
             <div className="container mx-auto px-4 py-8">
               <button
@@ -132,55 +135,56 @@ function App() {
             </div>
           ) : (
 
-          <Routes>
-          <Route path="/" element={
-            <>
-              {currentPage === 'dashboard' && (
-                <Hero onRegisterClick={() => setShowRegistration(true)} />
-              )}
-              {currentPage !== 'dashboard' && (
-                <div className="container mx-auto px-4 py-4">
-                  <button
-                    onClick={() => setCurrentPage('dashboard')}
-                    className="text-green-600 hover:text-green-700"
-                  >
-                    ← Back to Dashboard
-                  </button>
-                </div>
-              )}
-              <div className="container mx-auto px-4">
-                {renderPage()}
-              </div>
-            </>
-          } />
-          <Route path="/login" element={<Login onLogin={handleLogin} />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/admin-login" element={<AdminLogin onLogin={handleLogin} />} />
-          <Route path="/admin-signup" element={<AdminSignUp />} />
-          <Route
-            path="/user-dashboard"
-            element={
-              <ProtectedRoute isLoggedIn={isLoggedIn} isAdmin={isAdmin}>
-                <UserDashboard user={user} />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin-dashboard"
-            element={
-              <ProtectedRoute isLoggedIn={isLoggedIn} isAdmin={isAdmin}>
-                <AdminDashboard />
-              </ProtectedRoute>
-            }
-            />
-            
+            <Routes>
+              <Route path="/" element={
+                <>
+                  {currentPage === 'dashboard' && (
+                <Hero
+                      isLoggedIn={isLoggedIn} />
+                  )}
+                  {currentPage !== 'dashboard' && (
+                    <div className="container mx-auto px-4 py-4">
+                      <button
+                        onClick={() => setCurrentPage('dashboard')}
+                        className="text-green-600 hover:text-green-700"
+                      >
+                        ← Back to Dashboard
+                      </button>
+                    </div>
+                  )}
+                  <div className="container mx-auto px-4">
+                    {renderPage()}
+                  </div>
+                </>
+              } />
+              <Route path="/login" element={<Login onLogin={handleLogin} />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/admin-login" element={<AdminLogin onLogin={handleLogin} />} />
+              <Route path="/admin-signup" element={<AdminSignUp />} />
+              <Route
+                path="/user-dashboard"
+                element={
+                  <ProtectedRoute isLoggedIn={isLoggedIn} isAdmin={isAdmin}>
+                    <UserDashboard user={user} />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin-dashboard"
+                element={
+                  <ProtectedRoute isLoggedIn={isLoggedIn} isAdmin={isAdmin}>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
             </Routes>
           )}
         </div>
-        
+
       </Router>
-      
-      </>
+
+    </>
   );
 }
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Hero2 from './Hero2';
 
 const UserDashboard = ({ user }) => {
   const [issues, setIssues] = useState([]);
@@ -65,6 +66,8 @@ const UserDashboard = ({ user }) => {
   };
 
   return (
+    <>
+    <Hero2/>
     <div className="container mx-auto p-4">
       <h2 className="text-2xl font-bold mb-4">Welcome, {user.name}!</h2>
 
@@ -144,7 +147,8 @@ const UserDashboard = ({ user }) => {
           <p>No issues reported yet.</p>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

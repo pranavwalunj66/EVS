@@ -6,6 +6,11 @@
   animation: blink 1s infinite;
 }
 
+html{
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
 @keyframes blink {
   0% {
     visibility: hidden;

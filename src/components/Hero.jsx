@@ -1,11 +1,34 @@
 import { motion } from 'framer-motion';
 import { FaLeaf, FaRecycle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
-const Hero = ({ onRegisterClick }) => {
+const Hero = ({ isLoggedIn, isAdmin }) => {
+
+  const handleLogout = () => {
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('isAdmin');
+    localStorage.removeItem('user');
+    //refresh the page to show the changes
+    window.location.reload();
+  };
+
+  const navigate = useNavigate();
   return (
     <div className="relative overflow-hidden">
       <div className="bg-pattern mt-20 absolute inset-0" />
-      
+
+      {/* if user or admin in logged in then show Logout button on top right: */}
+      <div className="absolute top-4 right-4 z-10">
+        {isLoggedIn && (
+          <button
+            onClick={handleLogout}
+            className="text-green-600 hover:text-green-700 font-semibold text-lg"
+          >
+            Logout
+          </button>
+        )}
+      </div>
+
       {/* Decorative elements */}
       <div className="absolute top-0 left-0 w-64 h-64 text-green-500 opacity-10">
         <FaLeaf className="w-full h-full" />
@@ -44,14 +67,46 @@ const Hero = ({ onRegisterClick }) => {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8"
           >
-            <div className="rounded-md shadow">
-              <button
-                onClick={onRegisterClick}
-                className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 md:py-4 md:text-lg md:px-10 transition-all duration-300 shadow-lg hover:shadow-xl"
-              >
-                Register Now
-              </button>
-            </div>
+            {isLoggedIn && isAdmin ? (
+              <div className="rounded-md shadow">
+                <a
+                  href="#"
+                  onClick={() => navigate('/admin-dashboard')}
+                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 md:py-4 md:text-lg md:px-10 transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  Go to Admin Dashboard
+                </a>
+              </div>
+            ) : isLoggedIn ? (
+              <div className="rounded-md shadow">
+                <a
+                  href="#"
+                  onClick={() => navigate('/user-dashboard')}
+                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 md:py-4 md:text-lg md:px-10 transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  Go to Dashboard
+                </a>
+              </div>
+            ) : (
+              <>
+                <div className="rounded-md shadow mr-4">
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-500 hover:bg-green-600 md:py-4 md:text-lg md:px-10 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    Login
+                  </button>
+                </div>
+                <div className="rounded-md shadow">
+                  <button
+                    onClick={() => navigate('/signup')}
+                    className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 md:py-4 md:text-lg md:px-10 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  >
+                    Register Now
+                  </button>
+                </div>
+              </>
+            )}
           </motion.div>
         </motion.div>
       </div>
@@ -59,4 +114,4 @@ const Hero = ({ onRegisterClick }) => {
   );
 };
 
-export default Hero; 
+export default Hero;
