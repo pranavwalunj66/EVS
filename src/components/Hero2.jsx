@@ -18,7 +18,6 @@ const Hero2 = () => {
                 </button>
             </div>
 
-
             {/* Decorative elements */}
             <div className="absolute top-0 left-0 w-64 h-64 text-green-500 opacity-10">
                 <FaLeaf className="w-full h-full" />
@@ -51,7 +50,6 @@ const Hero2 = () => {
                     >
                         Solid Waste Management System
                     </motion.h2>
-                    
                 </motion.div>
             </div>
         </div>

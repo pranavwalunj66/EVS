@@ -44,7 +44,6 @@ const Header = ({ isLoggedIn, isAdmin, onLogout }) => {
                                 <li>
                                     <Link to="/signup">Signup</Link>
                                 </li>
-                                
                             </>
                         )}
                     </ul>

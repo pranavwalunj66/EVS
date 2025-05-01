@@ -97,7 +97,7 @@ const WasteIdentification = () => {
 
         try {
             const base64Data = await convertFileToBase64(file);
-        
+
             let response;
             try {
                 response = await fetch(
@@ -124,7 +124,7 @@ const WasteIdentification = () => {
                         }),
                     }
                 );
-        
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error('Gemini API Error (gemini-2.0-flash):', errorData);
@@ -156,18 +156,17 @@ const WasteIdentification = () => {
                         }),
                     }
                 );
-        
+
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error('Gemini API Error (gemini-2.0-flash-lite):', errorData);
                     throw new Error(`Gemini API request failed with status ${response.status}`);
                 }
             }
-        
-        
+
             const data = await response.json();
             console.log('Gemini API Response:', data);
-        
+
             if (
                 data.candidates &&
                 data.candidates.length > 0 &&
@@ -192,7 +191,6 @@ const WasteIdentification = () => {
             console.error('Error calling Gemini API:', error);
             throw error;
         }
-        
     };
 
     const convertFileToBase64 = (file) => {
@@ -217,7 +215,8 @@ const WasteIdentification = () => {
         <div className="container mx-auto p-4">
             <h1 className="text-3xl font-bold text-gray-800 mb-4">Waste Item Identification</h1>
             <p className="text-gray-600 mb-4">
-                Upload an image, video, or audio file of a waste item to identify it and learn how to dispose of it properly.
+                Upload an image, video, or audio file of a waste item to identify it and learn how
+                to dispose of it properly.
             </p>
 
             <div
@@ -236,7 +235,11 @@ const WasteIdentification = () => {
                 {mediaUrl ? (
                     <div className="flex flex-col items-center">
                         {mediaType === 'image' && (
-                            <img src={mediaUrl} alt="Uploaded image" className="max-w-full max-h-64 mx-auto rounded-lg" />
+                            <img
+                                src={mediaUrl}
+                                alt="Uploaded image"
+                                className="max-w-full max-h-64 mx-auto rounded-lg"
+                            />
                         )}
                         {mediaType === 'video' && (
                             <video
@@ -250,16 +253,10 @@ const WasteIdentification = () => {
                                 <div className="bg-gray-100 p-4 rounded-lg flex items-center justify-center mb-2">
                                     <FaMusic className="text-4xl text-green-600" />
                                 </div>
-                                <audio
-                                    src={mediaUrl}
-                                    controls
-                                    className="w-full"
-                                />
+                                <audio src={mediaUrl} controls className="w-full" />
                             </div>
                         )}
-                        <p className="text-sm text-gray-500 mt-2">
-                            {mediaFile.name}
-                        </p>
+                        <p className="text-sm text-gray-500 mt-2">{mediaFile.name}</p>
                     </div>
                 ) : (
                     <div className="text-center">
@@ -300,7 +297,12 @@ const WasteIdentification = () => {
                     <p className="text-gray-700">
                         <b>Confidence:</b> {(prediction.confidence * 100).toFixed(2)}%
                     </p>
-                    <div className="text-gray-700" dangerouslySetInnerHTML={{ __html: formatGeminiResponse(prediction.instructions) }} />
+                    <div
+                        className="text-gray-700"
+                        dangerouslySetInnerHTML={{
+                            __html: formatGeminiResponse(prediction.instructions),
+                        }}
+                    />
                 </div>
             )}
         </div>
@@ -312,12 +314,9 @@ const formatGeminiResponse = (text) => {
     let formattedText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
 
     // Convert markdown-like lists to <ul> and <li> tags with proper indentation
-    formattedText = formattedText.replace(
-        /(^|\n)\s*\* (.*?)(?=(\n\s*\*|$))/g,
-        (_match, p1, p2) => {
-            return `${p1}  <li>${p2}</li>`; // Added indentation here
-        }
-    );
+    formattedText = formattedText.replace(/(^|\n)\s*\* (.*?)(?=(\n\s*\*|$))/g, (_match, p1, p2) => {
+        return `${p1}  <li>${p2}</li>`; // Added indentation here
+    });
 
     // Wrap the list items in a <ul> tag with proper indentation
     formattedText = formattedText.replace(
@@ -331,7 +330,7 @@ const formatGeminiResponse = (text) => {
     formattedText = formattedText
         .split('\n')
         .map((line, index) => {
-            if (line.trim().length > 0 && !line.trim().startsWith("<li")) {
+            if (line.trim().length > 0 && !line.trim().startsWith('<li')) {
                 return `<p key=${index}>${line}</p>`;
             }
             return line;
