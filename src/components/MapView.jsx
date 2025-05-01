@@ -12,6 +12,15 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
+// Fixed coordinates for specific societies for consistent display
+const SOCIETY_COORDINATES = {
+  "Aishwarayam Hamara": { lat: 18.6739, lng: 73.8245 },
+  "River Residency": { lat: 18.6512, lng: 73.8424 },
+  "Kamla Nivas": { lat: 23.0371, lng: 72.5492 },
+  "Venture City": { lat: 18.6302, lng: 73.8547 },
+  "Aasara Crystal Heights": { lat: 18.6588, lng: 73.8857 }
+};
+
 const MapView = ({ society }) => {
   const [map, setMap] = useState(null);
   const mapContainerRef = useRef(null); // Create a ref for the map container
@@ -34,14 +43,19 @@ const MapView = ({ society }) => {
   }, []);
 
   useEffect(() => {
-    if (!map) return;
+    if (!map || !society) return;
 
     // Function to fetch coordinates for a given address
-    const fetchCoordinates = async (address) => {
+    const fetchCoordinates = async () => {
+      // First check if it's one of our specific societies
+      if (SOCIETY_COORDINATES[society.societyName]) {
+        return SOCIETY_COORDINATES[society.societyName];
+      }
+
       try {
         const response = await axios.get('https://nominatim.openstreetmap.org/search', {
           params: {
-            q: address,
+            q: society.address,
             format: 'json',
             limit: 1,
           },
@@ -52,7 +66,7 @@ const MapView = ({ society }) => {
           return { lat: parseFloat(lat), lng: parseFloat(lon) };
         } else {
           // Generate a deterministic random location within Pune if address not found
-          const hash = CryptoJS.SHA256(address).toString(CryptoJS.enc.Hex);
+          const hash = CryptoJS.SHA256(society.societyName + society.address).toString(CryptoJS.enc.Hex);
           const randomLat = 18.4 + (parseInt(hash.substring(0, 4), 16) % 2000) / 10000; // Roughly between 18.4 and 18.6
           const randomLng = 73.8 + (parseInt(hash.substring(4, 8), 16) % 2000) / 10000; // Roughly between 73.8 and 74.0
 
@@ -60,13 +74,18 @@ const MapView = ({ society }) => {
         }
       } catch (error) {
         console.error('Error fetching coordinates:', error);
+        
+        // Fallback to deterministic coordinates
+        const hash = CryptoJS.SHA256(society.societyName + society.address).toString(CryptoJS.enc.Hex);
+        const randomLat = 18.4 + (parseInt(hash.substring(0, 4), 16) % 2000) / 10000;
+        const randomLng = 73.8 + (parseInt(hash.substring(4, 8), 16) % 2000) / 10000;
+        return { lat: randomLat, lng: randomLng };
       }
-      return null;
     };
 
     // Add marker for the society
     const addMarker = async () => {
-      const coordinates = await fetchCoordinates(society.name + ', ' + society.address);
+      const coordinates = await fetchCoordinates();
       if (coordinates && coordinates.lat && coordinates.lng) {
         const marker = L.marker(coordinates).addTo(map);
         marker.bindPopup(`<b>${society.societyName}</b><br>${society.address}`);

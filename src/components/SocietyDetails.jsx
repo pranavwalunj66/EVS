@@ -3,6 +3,7 @@ import { FaArrowLeft, FaTrash, FaRecycle, FaLeaf, FaMapMarkedAlt, FaCalendarAlt 
 import MapView from './MapView';
 import ScheduleCalendar from './ScheduleCalendar';
 import { Line, Bar, Pie } from 'react-chartjs-2';
+import CryptoJS from 'crypto-js';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -29,21 +30,56 @@ ChartJS.register(
   Legend
 );
 
-const generateMonthlyData = () => {
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return months.map(() => Math.floor(Math.random() * 500) + 200);
+// List of specific societies we want to generate deterministic data for
+const SPECIFIC_SOCIETIES = [
+  "Aishwarayam Hamara",
+  "River Residency",
+  "Kamla Nivas",
+  "Venture City",
+  "Aasara Crystal Heights"
+];
+
+// Achievements for specific societies
+const SOCIETY_ACHIEVEMENTS = {
+  "Aishwarayam Hamara": "Best Waste Management Award 2023, 95% Segregation Rate",
+  "River Residency": "Zero Waste to Landfill Initiative, Community Composting Leader",
+  "Kamla Nivas": "Waste Reduction Champion 2024, Innovative Recycling Program",
+  "Venture City": "Green Society Award, 100% Organic Waste Composting",
+  "Aasara Crystal Heights": "Sustainable Community Award, Plastic-Free Initiative"
 };
 
-const generateWasteTypeData = () => {
+// Function to generate deterministic random number based on seed
+const generateHashBasedNumber = (seed, min, max) => {
+  const hash = CryptoJS.SHA256(seed).toString(CryptoJS.enc.Hex);
+  const value = parseInt(hash.substring(0, 8), 16);
+  return min + (value % (max - min + 1));
+};
+
+// Generate monthly data with consistent values based on society name
+const generateMonthlyData = (societyName) => {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  return months.map((month, index) => {
+    const seed = `${societyName}-${month}-monthly`;
+    return generateHashBasedNumber(seed, 200, 700);
+  });
+};
+
+// Generate waste type distribution with consistent values based on society name
+const generateWasteTypeData = (societyName) => {
   return {
-    organic: Math.floor(Math.random() * 40) + 30,
-    recyclable: Math.floor(Math.random() * 30) + 20,
-    nonRecyclable: Math.floor(Math.random() * 20) + 10,
+    organic: generateHashBasedNumber(`${societyName}-organic-waste`, 30, 70),
+    recyclable: generateHashBasedNumber(`${societyName}-recyclable-waste`, 20, 50),
+    nonRecyclable: generateHashBasedNumber(`${societyName}-nonrecyclable-waste`, 10, 30),
   };
 };
 
-const generateEfficiencyData = () => {
-  return Array(12).fill(0).map(() => Math.floor(Math.random() * 20) + 70);
+// Generate efficiency data with consistent values based on society name
+const generateEfficiencyData = (societyName) => {
+  return Array(12).fill(0).map((_, index) => {
+    const seed = `${societyName}-efficiency-${index}`;
+    return generateHashBasedNumber(seed, 70, 95);
+  });
 };
 
 const NoDataMessage = () => (
@@ -53,26 +89,33 @@ const NoDataMessage = () => (
 );
 
 const SocietyDetails = ({ society, onBack }) => {
-  // Check if this is a hardcoded society (has achievements)
-  const isHardcodedSociety = society.achievements !== undefined;
-
-  // Generate data for each waste type
-  const generateMonthlyDataForType = () => {
-    return Array(12).fill(0).map(() => Math.floor(Math.random() * 200) + 100);
+  // Check if this is one of our specific societies
+  const isSpecificSociety = SPECIFIC_SOCIETIES.includes(society.societyName);
+  
+  // Generate data for each waste type based on society name
+  const generateMonthlyDataForType = (societyName, type) => {
+    return Array(12).fill(0).map((_, index) => {
+      const seed = `${societyName}-${type}-month-${index}`;
+      return generateHashBasedNumber(seed, 100, 300);
+    });
   };
 
-  const monthlyData = isHardcodedSociety ? {
-    organic: generateMonthlyDataForType(),
-    recyclable: generateMonthlyDataForType(),
-    nonRecyclable: generateMonthlyDataForType()
+  // Get society data based on whether it's a specific society
+  const monthlyData = isSpecificSociety ? {
+    organic: generateMonthlyDataForType(society.societyName, 'organic'),
+    recyclable: generateMonthlyDataForType(society.societyName, 'recyclable'),
+    nonRecyclable: generateMonthlyDataForType(society.societyName, 'nonRecyclable')
   } : {
     organic: Array(12).fill(0),
     recyclable: Array(12).fill(0),
     nonRecyclable: Array(12).fill(0)
   };
 
-  const wasteTypeData = isHardcodedSociety ? generateWasteTypeData() : { organic: 0, recyclable: 0, nonRecyclable: 0 };
-  const efficiencyData = isHardcodedSociety ? generateEfficiencyData() : Array(12).fill(0);
+  const wasteTypeData = isSpecificSociety ? generateWasteTypeData(society.societyName) : { organic: 0, recyclable: 0, nonRecyclable: 0 };
+  const efficiencyData = isSpecificSociety ? generateEfficiencyData(society.societyName) : Array(12).fill(0);
+
+  // Add achievements to the society object if it's one of our specific societies
+  const societyAchievement = isSpecificSociety ? SOCIETY_ACHIEVEMENTS[society.societyName] : null;
 
   const monthlyChartData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -140,7 +183,7 @@ const SocietyDetails = ({ society, onBack }) => {
                     monthlyData.recyclable.reduce((a, b) => a + b, 0) +
                     monthlyData.nonRecyclable.reduce((a, b) => a + b, 0);
   const avgEfficiency = efficiencyData.reduce((a, b) => a + b, 0) / 12;
-  const recyclingRate = isHardcodedSociety
+  const recyclingRate = isSpecificSociety
     ? (wasteTypeData.recyclable / (wasteTypeData.organic + wasteTypeData.recyclable + wasteTypeData.nonRecyclable)) * 100
     : 0;
 
@@ -166,19 +209,19 @@ const SocietyDetails = ({ society, onBack }) => {
             <div className="stat-card">
               <FaTrash className="text-3xl text-green-600 mb-2" />
               <h3 className="text-lg font-semibold">Total Waste</h3>
-              <p className="text-2xl font-bold">{isHardcodedSociety ? `${totalWaste} kg` : '0 kg'}</p>
+              <p className="text-2xl font-bold">{isSpecificSociety ? `${totalWaste} kg` : '0 kg'}</p>
               <p className="text-sm text-gray-500">Last 12 months</p>
             </div>
             <div className="stat-card">
               <FaRecycle className="text-3xl text-blue-600 mb-2" />
               <h3 className="text-lg font-semibold">Recycling Rate</h3>
-              <p className="text-2xl font-bold">{isHardcodedSociety ? `${recyclingRate.toFixed(1)}%` : '0%'}</p>
+              <p className="text-2xl font-bold">{isSpecificSociety ? `${recyclingRate.toFixed(1)}%` : '0%'}</p>
               <p className="text-sm text-gray-500">Current rate</p>
             </div>
             <div className="stat-card">
               <FaLeaf className="text-3xl text-green-600 mb-2" />
               <h3 className="text-lg font-semibold">Segregation Efficiency</h3>
-              <p className="text-2xl font-bold">{isHardcodedSociety ? `${avgEfficiency.toFixed(1)}%` : '0%'}</p>
+              <p className="text-2xl font-bold">{isSpecificSociety ? `${avgEfficiency.toFixed(1)}%` : '0%'}</p>
               <p className="text-sm text-gray-500">Average efficiency</p>
             </div>
           </div>
@@ -186,7 +229,7 @@ const SocietyDetails = ({ society, onBack }) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="chart-container">
               <h3 className="text-xl font-semibold mb-4">Monthly Waste Collection</h3>
-              {isHardcodedSociety ? (
+              {isSpecificSociety ? (
                 <Bar data={monthlyChartData} options={{
                   responsive: true,
                   plugins: {
@@ -209,7 +252,7 @@ const SocietyDetails = ({ society, onBack }) => {
             </div>
             <div className="chart-container">
               <h3 className="text-xl font-semibold mb-4">Waste Composition</h3>
-              {isHardcodedSociety ? (
+              {isSpecificSociety ? (
                 <Pie data={wasteTypeChartData} options={{
                   responsive: true,
                   plugins: {
@@ -224,7 +267,7 @@ const SocietyDetails = ({ society, onBack }) => {
             </div>
             <div className="chart-container lg:col-span-2">
               <h3 className="text-xl font-semibold mb-4">Segregation Efficiency Trend</h3>
-              {isHardcodedSociety ? (
+              {isSpecificSociety ? (
                 <Line data={efficiencyChartData} options={{
                   responsive: true,
                   plugins: {
@@ -263,10 +306,10 @@ const SocietyDetails = ({ society, onBack }) => {
                 <span className="font-semibold">Total Families:</span> {society.totalFamilies}
               </p>
             </div>
-            {isHardcodedSociety && (
+            {societyAchievement && (
               <div>
                 <p className="text-gray-600">
-                  <span className="font-semibold">Achievements:</span> {society.achievements}
+                  <span className="font-semibold">Achievements:</span> {societyAchievement}
                 </p>
               </div>
             )}
@@ -281,7 +324,7 @@ const SocietyDetails = ({ society, onBack }) => {
           <MapView society={society} />
         </div>
 
-        <ScheduleCalendar societyId={society.id} societyName={society.societyName} />
+        <ScheduleCalendar societyId={society._id} societyName={society.societyName} />
       </div>
     </motion.div>
   );

@@ -3,6 +3,79 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { FaCalendarAlt, FaPlus, FaTimes, FaLock } from 'react-icons/fa';
 import hardcodedSchedules from '../data/hardcodedSchedules';
+import CryptoJS from 'crypto-js';
+
+// List of specific societies to generate deterministic data for
+const SPECIFIC_SOCIETIES = [
+  "Aishwarayam Hamara",
+  "River Residency",
+  "Kamla Nivas",
+  "Venture City",
+  "Aasara Crystal Heights"
+];
+
+// Function to generate deterministic waste collection schedules
+const generateDeterministicSchedules = (societyName) => {
+  // Use the society name as seed to generate consistent collection dates
+  const hash = CryptoJS.SHA256(societyName).toString(CryptoJS.enc.Hex);
+  
+  // Get current month and year for scheduling
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  
+  // Waste types to schedule
+  const wasteTypes = ['organic', 'recyclable', 'nonRecyclable', 'all'];
+  
+  // Generate day of week for first collection (1-7)
+  const startDay = parseInt(hash.substring(0, 2), 16) % 7 + 1;
+  
+  // Generate schedules for the current month (weekly collections)
+  const schedules = [];
+  
+  for (let i = 0; i < 4; i++) {
+    // Calculate weekly collection day
+    const day = startDay + (i * 7);
+    if (day <= 28) { // Ensure we don't exceed month length for simplicity
+      // Determine waste type using hash
+      const wasteTypeIndex = parseInt(hash.substring(i*2, i*2+2), 16) % wasteTypes.length;
+      const wasteType = wasteTypes[wasteTypeIndex];
+      
+      // Generate notes text based on waste type
+      let notes = '';
+      switch (wasteType) {
+        case 'organic':
+          notes = 'Organic waste collection';
+          break;
+        case 'recyclable':
+          notes = 'Recyclable waste collection';
+          break;
+        case 'nonRecyclable':
+          notes = 'Non-recyclable waste collection';
+          break;
+        case 'all':
+          notes = 'Full waste collection';
+          break;
+      }
+      
+      // Add some variety to notes based on society hash
+      if ((parseInt(hash.substring(i*3, i*3+2), 16) % 3) === 0) {
+        notes += ' (special drive)';
+      }
+      
+      // Add schedule
+      schedules.push({
+        id: `${societyName}-${i}`,
+        date: new Date(year, month, day).toISOString(),
+        wasteType,
+        notes,
+        isHardcoded: true
+      });
+    }
+  }
+  
+  return schedules;
+};
 
 const ScheduleCalendar = ({ societyId, societyName }) => {
   const [date, setDate] = useState(new Date());
@@ -14,22 +87,33 @@ const ScheduleCalendar = ({ societyId, societyName }) => {
     notes: '',
   });
 
-  // Check if this is a hardcoded society (ID between 1-5)
-  const isHardcodedSociety = societyId >= 1 && societyId <= 5;
+  // Check if this is one of our specific societies
+  const isSpecificSociety = SPECIFIC_SOCIETIES.includes(societyName);
+  
+  // Check if this is a numeric ID (for old hardcoded societies)
+  const isNumericId = !isNaN(parseInt(societyId)) && parseInt(societyId) >= 1 && parseInt(societyId) <= 5;
 
-  // Load schedules from localStorage and merge with hardcoded schedules if applicable
+  // Load schedules from localStorage and merge with generated schedules if applicable
   useEffect(() => {
     // Get user-added schedules from localStorage
     const storedSchedules = JSON.parse(localStorage.getItem(`schedules_${societyId}`) || '[]');
 
-    // If this is a hardcoded society, merge with hardcoded schedules
-    if (isHardcodedSociety && hardcodedSchedules[societyId]) {
+    // If this is one of our specific societies, generate deterministic schedules
+    if (isSpecificSociety) {
+      const generatedSchedules = generateDeterministicSchedules(societyName);
+      const allSchedules = [...generatedSchedules, ...storedSchedules];
+      setSchedules(allSchedules);
+    } 
+    // For old hardcoded societies (ID 1-5), use hardcoded schedules
+    else if (isNumericId && hardcodedSchedules[societyId]) {
       const allSchedules = [...hardcodedSchedules[societyId], ...storedSchedules];
       setSchedules(allSchedules);
-    } else {
+    } 
+    // Otherwise just use stored schedules
+    else {
       setSchedules(storedSchedules);
     }
-  }, [societyId, isHardcodedSociety]);
+  }, [societyId, societyName, isSpecificSociety, isNumericId]);
 
   // Save schedules to localStorage whenever they change (only user-added ones)
   useEffect(() => {
