@@ -158,6 +158,18 @@ app.put('/api/issues/:issueId', async (req, res) => {
   }
 });
 
+// Get All Users (Societies)
+app.get('/api/societies', async (req, res) => {
+  try {
+    const users = await User.find();
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
 // Start Server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

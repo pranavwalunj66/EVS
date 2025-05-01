@@ -12,7 +12,11 @@
   "dependencies": {
     "@tensorflow-models/mobilenet": "^2.1.1",
     "@tensorflow/tfjs": "^4.22.0",
+    "axios": "^1.9.0",
     "chart.js": "^4.4.9",
+    "crypto": "^1.0.1",
+    "crypto-js": "^4.2.0",
+    "cryptojs": "^2.5.3",
     "framer-motion": "^12.7.3",
     "leaflet": "^1.9.4",
     "react": "^19.0.0",

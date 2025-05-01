@@ -34,70 +34,95 @@ const SocietyCard = ({ society, onClick }) => (
 );
 
 const ConnectedSocietiesPage = () => {
+  // const [societies, setSocieties] = useState([]);
+  // const [selectedSociety, setSelectedSociety] = useState(null);
+  // const [showMapView, setShowMapView] = useState(false);
+
+  // // Hardcoded societies
+  // const hardcodedSocieties = [
+  //   {
+  //     id: 1,
+  //     societyName: "Green Valley Society",
+  //     address: "123 Green Valley Road, Sector 15, New Delhi",
+  //     contactPerson: "Mr. Rajesh Kumar",
+  //     contactNumber: "+91 98765 43210",
+  //     totalFamilies: 120,
+  //     achievements: "Best Waste Management Award 2023"
+  //   },
+  //   {
+  //     id: 2,
+  //     societyName: "Eco Park Residency",
+  //     address: "456 Eco Park Avenue, Phase 2, Gurgaon",
+  //     contactPerson: "Mrs. Priya Sharma",
+  //     contactNumber: "+91 87654 32109",
+  //     totalFamilies: 85,
+  //     achievements: "100% Waste Segregation"
+  //   },
+  //   {
+  //     id: 3,
+  //     societyName: "Sunrise Heights",
+  //     address: "789 Sunrise Boulevard, Block C, Mumbai",
+  //     contactPerson: "Mr. Amit Patel",
+  //     contactNumber: "+91 76543 21098",
+  //     totalFamilies: 150,
+  //     achievements: "Zero Waste to Landfill"
+  //   },
+  //   {
+  //     id: 4,
+  //     societyName: "Green Meadows",
+  //     address: "321 Green Meadows Lane, Phase 3, Bangalore",
+  //     contactPerson: "Ms. Sneha Reddy",
+  //     contactNumber: "+91 65432 10987",
+  //     totalFamilies: 95,
+  //     achievements: "Best Composting Initiative"
+  //   },
+  //   {
+  //     id: 5,
+  //     societyName: "Nature's Nest",
+  //     address: "654 Nature's Way, Sector 8, Pune",
+  //     contactPerson: "Mr. Vikram Singh",
+  //     contactNumber: "+91 54321 09876",
+  //     totalFamilies: 110,
+  //     achievements: "Innovative Recycling Program"
+  //   }
+  // ];
+
+  // useEffect(() => {
+  //   // Get societies from localStorage
+  //   const storedSocieties = JSON.parse(localStorage.getItem('societies') || '[]');
+
+  //   // Sort stored societies by ID in descending order (newest first)
+  //   const sortedStoredSocieties = [...storedSocieties].sort((a, b) => b.id - a.id);
+
+  //   // Combine sorted stored societies (at the top) with hardcoded societies
+  //   const allSocieties = [...sortedStoredSocieties, ...hardcodedSocieties];
+  //   setSocieties(allSocieties);
+  // }, []);
+
   const [societies, setSocieties] = useState([]);
   const [selectedSociety, setSelectedSociety] = useState(null);
   const [showMapView, setShowMapView] = useState(false);
-
-  // Hardcoded societies
-  const hardcodedSocieties = [
-    {
-      id: 1,
-      societyName: "Green Valley Society",
-      address: "123 Green Valley Road, Sector 15, New Delhi",
-      contactPerson: "Mr. Rajesh Kumar",
-      contactNumber: "+91 98765 43210",
-      totalFamilies: 120,
-      achievements: "Best Waste Management Award 2023"
-    },
-    {
-      id: 2,
-      societyName: "Eco Park Residency",
-      address: "456 Eco Park Avenue, Phase 2, Gurgaon",
-      contactPerson: "Mrs. Priya Sharma",
-      contactNumber: "+91 87654 32109",
-      totalFamilies: 85,
-      achievements: "100% Waste Segregation"
-    },
-    {
-      id: 3,
-      societyName: "Sunrise Heights",
-      address: "789 Sunrise Boulevard, Block C, Mumbai",
-      contactPerson: "Mr. Amit Patel",
-      contactNumber: "+91 76543 21098",
-      totalFamilies: 150,
-      achievements: "Zero Waste to Landfill"
-    },
-    {
-      id: 4,
-      societyName: "Green Meadows",
-      address: "321 Green Meadows Lane, Phase 3, Bangalore",
-      contactPerson: "Ms. Sneha Reddy",
-      contactNumber: "+91 65432 10987",
-      totalFamilies: 95,
-      achievements: "Best Composting Initiative"
-    },
-    {
-      id: 5,
-      societyName: "Nature's Nest",
-      address: "654 Nature's Way, Sector 8, Pune",
-      contactPerson: "Mr. Vikram Singh",
-      contactNumber: "+91 54321 09876",
-      totalFamilies: 110,
-      achievements: "Innovative Recycling Program"
-    }
-  ];
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Get societies from localStorage
-    const storedSocieties = JSON.parse(localStorage.getItem('societies') || '[]');
-
-    // Sort stored societies by ID in descending order (newest first)
-    const sortedStoredSocieties = [...storedSocieties].sort((a, b) => b.id - a.id);
-
-    // Combine sorted stored societies (at the top) with hardcoded societies
-    const allSocieties = [...sortedStoredSocieties, ...hardcodedSocieties];
-    setSocieties(allSocieties);
+    const fetchSocieties = async () => {
+      try {
+        const response = await fetch(import.meta.env.VITE_BACKEND_URL + '/api/societies');
+        if (!response.ok) {
+          throw new Error('Failed to fetch societies');
+        }
+        const data = await response.json();
+        setSocieties(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSocieties();
   }, []);
+
 
   const handleSocietyClick = (society) => {
     setSelectedSociety(society);
@@ -132,20 +157,30 @@ const ConnectedSocietiesPage = () => {
             <FaMap className="mr-2" /> View Map
           </button>
         </div>
-        {societies.length === 0 ? (
-          <div className="text-center text-gray-500 py-12">
-            No societies registered yet. Be the first to join!
-          </div>
+        {loading ? (
+          <p>Loading societies...</p>
+        ) : error ? (
+          <p>Error: {error}</p>
+        ) : selectedSociety ? (
+          <SocietyDetails society={selectedSociety} onBack={handleBackToList} />
+        ) : showMapView ? (
+          <SocietiesMapView societies={societies} onBack={handleBackToList} onSocietySelect={handleSocietyClick} />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {societies.map((society) => (
-              <SocietyCard
-                key={society.id}
-                society={society}
-                onClick={handleSocietyClick}
-              />
-            ))}
-          </div>
+          societies.length === 0 ? (
+            <div className="text-center text-gray-500 py-12">
+              No societies registered yet. Be the first to join!
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {societies.map((society) => (
+                <SocietyCard 
+                  key={society.id}
+                  society={society}
+                  onClick={handleSocietyClick}
+                />
+              ))}
+            </div>
+          )
         )}
       </div>
     </div>

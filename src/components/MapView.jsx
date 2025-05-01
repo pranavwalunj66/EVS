@@ -1,8 +1,10 @@
-import { useEffect } from 'react';
+import CryptoJS from 'crypto-js';
+import React, { useEffect, useState, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import axios from 'axios';
 
-// Fix for default marker icon issue in react-leaflet
+// Fix for Leaflet's default marker icon issue
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
@@ -10,51 +12,76 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-// Function to generate coordinates based on society address
-// This is a simple hash function for demo purposes
-const generateCoordinates = (address) => {
-  // Generate a deterministic "random" latitude and longitude based on the address
-  // This ensures the same address always gets the same coordinates
-  let hash = 0;
-  for (let i = 0; i < address.length; i++) {
-    hash = address.charCodeAt(i) + ((hash << 5) - hash);
-  }
-
-  // Generate latitude between 28.4 and 28.7 (Delhi/NCR region)
-  const lat = 28.4 + (Math.abs(hash % 1000) / 3000);
-
-  // Generate longitude between 77.0 and 77.4 (Delhi/NCR region)
-  const lng = 77.0 + (Math.abs((hash >> 10) % 1000) / 2500);
-
-  return [lat, lng];
-};
-
 const MapView = ({ society }) => {
-  useEffect(() => {
-    // Generate coordinates based on society address
-    const [lat, lng] = generateCoordinates(society.address);
+  const [map, setMap] = useState(null);
+  const mapContainerRef = useRef(null); // Create a ref for the map container
 
-    // Initialize map
-    const map = L.map('map').setView([lat, lng], 13);
+  useEffect(() => {
+    if (!mapContainerRef.current) return; // Ensure the container exists
+
+    const initializedMap = L.map('map').setView([18.5204, 73.8567], 13);
 
     // Add tile layer (OpenStreetMap)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
+    }).addTo(initializedMap);
+
+    setMap(initializedMap);
+
+    return () => {
+      initializedMap.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!map) return;
+
+    // Function to fetch coordinates for a given address
+    const fetchCoordinates = async (address) => {
+      try {
+        const response = await axios.get('https://nominatim.openstreetmap.org/search', {
+          params: {
+            q: address,
+            format: 'json',
+            limit: 1,
+          },
+        });
+
+        if (response.data.length > 0) {
+          const { lat, lon } = response.data[0];
+          return { lat: parseFloat(lat), lng: parseFloat(lon) };
+        } else {
+          // Generate a deterministic random location within Pune if address not found
+          const hash = CryptoJS.SHA256(address).toString(CryptoJS.enc.Hex);
+          const randomLat = 18.4 + (parseInt(hash.substring(0, 4), 16) % 2000) / 10000; // Roughly between 18.4 and 18.6
+          const randomLng = 73.8 + (parseInt(hash.substring(4, 8), 16) % 2000) / 10000; // Roughly between 73.8 and 74.0
+
+          return { lat: randomLat, lng: randomLng };
+        }
+      } catch (error) {
+        console.error('Error fetching coordinates:', error);
+      }
+      return null;
+    };
 
     // Add marker for the society
-    const marker = L.marker([lat, lng]).addTo(map);
-    marker.bindPopup(`<b>${society.societyName}</b><br>${society.address}`).openPopup();
-
-    // Cleanup function
-    return () => {
-      map.remove();
+    const addMarker = async () => {
+      const coordinates = await fetchCoordinates(society.societyName + ' ' + society.address);
+      if (coordinates && coordinates.lat && coordinates.lng) {
+        const marker = L.marker(coordinates).addTo(map);
+        marker.bindPopup(`<b>${society.societyName}</b><br>${society.address}`);
+        map.setView(coordinates, 15); // Set the view to the marker's location with zoom level 15
+      }
     };
-  }, [society]);
+
+    addMarker();
+  }, [map, society]);
 
   return (
-    <div id="map" className="h-80 rounded-lg shadow-md"></div>
+    <div>
+      <div id="map" className="h-80 rounded-lg shadow-md" ref={mapContainerRef}></div>
+    </div>
   );
-};
+}
 
 export default MapView;
