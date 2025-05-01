@@ -79,7 +79,7 @@ const SocietiesMapView = ({ societies, onBack, onSocietySelect }) => {
               <p class="text-sm">${society.address}</p>
               <p class="text-sm mt-2">${society.totalFamilies} Families</p>
               <button
-                id="view-society-${society.id}"
+                id="view-society-${society._id}"
                 class="mt-2 px-3 py-1 bg-green-600 text-white text-sm rounded-md"
               >
                 View Details
@@ -100,7 +100,7 @@ const SocietiesMapView = ({ societies, onBack, onSocietySelect }) => {
       // Add event listeners to the "View Details" buttons in popups
       map.on('popupopen', (e) => {
         societies.forEach(society => {
-          const button = document.getElementById(`view-society-${society.id}`);
+          const button = document.getElementById(`view-society-${society._id}`);
           if (button) {
             button.addEventListener('click', () => {
               onSocietySelect(society);

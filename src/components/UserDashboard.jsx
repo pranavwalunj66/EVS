@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Hero2 from './Hero2';
+import { FaCheckCircle, FaClock } from 'react-icons/fa';
 
 const UserDashboard = ({ user }) => {
   const [issues, setIssues] = useState([]);
@@ -67,13 +68,13 @@ const UserDashboard = ({ user }) => {
 
   return (
     <>
-    <Hero2/>
-    <div className="container mx-auto p-4">
-      <h2 className="text-2xl font-bold mb-4">Welcome, {user.name}!</h2>
+      <Hero2 />
+      <div className="container mx-auto p-4">
+        <h2 className="text-3xl font-bold text-primary mb-6">Welcome, {user.name}!</h2>
 
-      {/* Issue Submission Form */}
-      <div className="bg-white p-4 rounded shadow mb-4">
-        <h3 className="text-lg font-semibold mb-2">Report a New Issue</h3>
+        {/* Issue Submission Form */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <h3 className="text-lg font-semibold text-gray-700 mb-4">Report a New Issue</h3>
         <form onSubmit={handleSubmit}>
           <div className="mb-2">
             <label htmlFor="description" className="block">Description:</label>
@@ -82,7 +83,7 @@ const UserDashboard = ({ user }) => {
               name="description"
               value={newIssue.description}
               onChange={handleInputChange}
-              className="w-full border p-2"
+              className="w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
           </div>
@@ -94,7 +95,7 @@ const UserDashboard = ({ user }) => {
               name="location"
               value={newIssue.location}
               onChange={handleInputChange}
-              className="w-full border p-2"
+              className="w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
           </div>
@@ -106,7 +107,7 @@ const UserDashboard = ({ user }) => {
               name="address"
               value={newIssue.address}
               onChange={handleInputChange}
-              className="w-full border p-2"
+              className="w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary"
               required
             />
           </div>
@@ -117,39 +118,79 @@ const UserDashboard = ({ user }) => {
               id="image"
               name="image"
               onChange={handleImageChange}
-              className="w-full border p-2"
+              className="w-full border rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
-          <button type="submit" className="bg-green-500 text-white p-2 rounded">
+          <button type="submit" className="bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1">
             Submit Issue
           </button>
         </form>
       </div>
 
       {/* List of Issues */}
-      <div className="bg-white p-4 rounded shadow">
-        <h3 className="text-lg font-semibold mb-2">Your Issues</h3>
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="px-6 py-4 bg-gray-50">
+          <h3 className="text-lg font-semibold text-gray-700">Your Issues</h3>
+        </div>
         {issues.length > 0 ? (
-          <ul>
+          <ul className="divide-y divide-gray-200">
             {issues.map((issue) => (
-              <li key={issue._id} className="border-b py-2">
-                <p>Description: {issue.description}</p>
-                <p>Location: {issue.location}</p>
-                <p>Address: {issue.address}</p>
-                <p>Status: {issue.status}</p>
-                {issue.imageUrl && (
-                        <img src={import.meta.env.VITE_BACKEND_URL + issue.imageUrl} alt="Issue" className="w-32 h-32 object-cover" />
-                )}
+              <li key={issue._id} className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
+                <div className="flex items-start">
+                  {/* Image on the left */}
+                  {issue.imageUrl && (
+                    <div className="mr-4">
+                      <img
+                        src={import.meta.env.VITE_BACKEND_URL + issue.imageUrl}
+                        alt="Issue"
+                        className="w-24 h-24 object-cover rounded-md shadow-sm"
+                      />
+                    </div>
+                  )}
+
+                  {/* Issue details on the right */}
+                  <div className="flex-1">
+                    <p className="text-gray-800">{issue.description}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Location: {issue.location}, {issue.address}
+                    </p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Reported on: {new Date(issue.createdAt).toLocaleDateString()}
+                    </p>
+
+                    {/* Status with Icon */}
+                    <div className="flex items-center mt-2">
+                      <span className="mr-2">Status:</span>
+                      {issue.status === 'pending' && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                          <FaClock className="mr-1" />
+                          {issue.status}
+                        </span>
+                      )}
+                      {issue.status === 'in process' && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                          <FaClock className="mr-1" />
+                          {issue.status}
+                        </span>
+                      )}
+                      {issue.status === 'resolved' && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                          <FaCheckCircle className="mr-1" />
+                          {issue.status}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
         ) : (
-          <p>No issues reported yet.</p>
+          <p className="px-6 py-4 text-gray-500">No issues reported yet.</p>
         )}
       </div>
       </div>
     </>
   );
 };
-
 export default UserDashboard;
